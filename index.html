@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskifyPro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        header {
+            background-color:rgb(159, 117, 198);
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        h1 {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #loginForm, #adminDashboard, #employeeDashboard {
+            display: none;
+        }
+
+        input, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color:rgb(159, 117, 198);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color:rgb(158, 107, 205);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        h2 {
+            color: #4a90e2;
+        }
+
+        .dashboard {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .task-actions button {
+            width: auto;
+            padding: 5px 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        
+        <img src="unnamed.png" class="logo" alt="NexaTech Solutions Logo">
+        <h1>TaskifyPro</h1>
+    </header>
+
+    <div class="container">
+        <!-- Login Form -->
+        <div id="loginForm">
+            <h2>Login</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Log In</button>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminDashboard" class="dashboard">
+            <h2>Admin Dashboard</h2>
+            <h3>Add New Task</h3>
+            <input type="text" id="newTaskTitle" placeholder="Task Title">
+            <input type="number" id="newTaskAssignedTo" placeholder="Assign to (User ID)">
+            <button onclick="addTask()">Add Task</button>
+
+            <h3>All Tasks</h3>
+            <table id="adminTaskTable">
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                </tr>
+            </table>
+
+            <button onclick="logout()">Log Out</button>
+        </div>
+
+        <!-- Employee Dashboard -->
+        <div id="employeeDashboard" class="dashboard">
+            <h2>Employee Dashboard</h2>
+            <h3>My Tasks</h3>
+            <table id="employeeTaskTable">
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </table>
+
+            <button onclick="logout()">Log Out</button>
+        </div>
+    </div>
+
+    <script>
+        // Mock database of users
+        const users = [
+            { id: 1, username: 'aman', password: 'aman67', role: 'admin' },
+            { id: 2, username: 'emp1', password: 'emp123', role: 'employee' },
+            { id: 3, username: 'employee', password: 'emp456', role: 'employee' }
+        ];
+
+        // Mock tasks database
+        let tasks = [
+            { id: 1, title: 'Develop new feature', assignedTo: 2, status: 'In Progress' },
+            { id: 2, title: 'Review code changes', assignedTo: 3, status: 'Pending' },
+            { id: 3, title: 'Update documentation', assignedTo: 2, status: 'Completed' }
+        ];
+
+        let currentUser = null;
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginForm').style.display = 'none';
+                if (user.role === 'admin') {
+                    document.getElementById('adminDashboard').style.display = 'block';
+                    renderAdminTasks();
+                } else {
+                    document.getElementById('employeeDashboard').style.display = 'block';
+                    renderEmployeeTasks();
+                }
+            } else {
+                alert('Invalid username or password');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('adminDashboard').style.display = 'none';
+            document.getElementById('employeeDashboard').style.display = 'none';
+        }
+
+        function addTask() {
+            const taskTitle = document.getElementById('newTaskTitle').value;
+            const assignedTo = parseInt(document.getElementById('newTaskAssignedTo').value);
+            const assignedUser = users.find(user => user.id === assignedTo);
+
+            if (taskTitle && assignedUser) {
+                const newTask = {
+                    id: tasks.length + 1,
+                    title: taskTitle,
+                    assignedTo: assignedTo,
+                    status: 'Pending'
+                };
+                tasks.push(newTask);
+                renderAdminTasks();
+                document.getElementById('newTaskTitle').value = '';
+                document.getElementById('newTaskAssignedTo').value = '';
+            } else {
+                alert('Please provide a valid task title and user ID.');
+            }
+        }
+
+        function renderAdminTasks() {
+            const adminTaskTable = document.getElementById('adminTaskTable');
+            adminTaskTable.innerHTML = `
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                </tr>
+            `;
+
+            tasks.forEach(task => {
+                const assignedUser = users.find(user => user.id === task.assignedTo);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${task.id}</td>
+                    <td>${task.title}</td>
+                    <td>${assignedUser ? assignedUser.username : 'Unknown'}</td>
+                    <td>${task.status}</td>
+                `;
+                adminTaskTable.appendChild(row);
+            });
+        }
+
+        function renderEmployeeTasks() {
+            const employeeTaskTable = document.getElementById('employeeTaskTable');
+            employeeTaskTable.innerHTML = `
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            tasks.filter(task => task.assignedTo === currentUser.id).forEach(task => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${task.title}</td>
+                    <td>${task.status}</td>
+                    <td class="task-actions">
+                        ${task.status !== 'Completed' ? `<button onclick="completeTask(${task.id})">Complete</button>` : 'Completed'}
+                    </td>
+                `;
+                employeeTaskTable.appendChild(row);
+            });
+        }
+
+        function completeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'Completed';
+                renderEmployeeTasks();
+            }
+        }
+
+        // Show login form on page load
+        document.getElementById('loginForm').style.display = 'block';
+
+    </script>
+
+</body>
+</html>
